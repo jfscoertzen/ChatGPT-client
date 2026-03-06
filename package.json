@@ -1,0 +1,43 @@
+{
+  "name": "chatgpt",
+  "version": "1.0.0",
+  "description": "Linux-friendly Electron wrapper for ChatGPT",
+  "homepage": "https://chatgpt.com",
+  "main": "main.js",
+  "author": {
+    "name": "Stephan Coertzen",
+    "email": "coertzen.jfs@gmail.com"
+  },
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron .",
+    "build:linux": "electron-builder --linux",
+    "release:linux": "npm run build:linux"
+  },
+  "devDependencies": {
+    "electron": "^37.2.0",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.local.chatgpt",
+    "productName": "ChatGPT",
+    "npmRebuild": false,
+    "files": [
+      "main.js",
+      "preload.js",
+      "package.json"
+    ],
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "icon": "build/icons",
+      "executableName": "chatgpt",
+      "maintainer": "Stephan Coertzen <coertzen.jfs@gmail.com>",
+      "category": "Utility"
+    }
+  }
+}
