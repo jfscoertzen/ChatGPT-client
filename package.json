@@ -10,6 +10,9 @@
   },
   "license": "MIT",
   "private": true,
+  "releaseNotes": {
+    "fromHash": "28cf9a9"
+  },
   "scripts": {
     "start": "electron .",
     "dev": "electron .",

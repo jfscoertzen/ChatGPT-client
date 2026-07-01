@@ -37,7 +37,7 @@ Build outputs are generated in `dist/`:
 
 ## GitHub Release Flow
 
-Pushing a version tag (for example `v1.0.1`) triggers automated Linux builds and publishes a GitHub Release with attached artifacts.
+Pushing a version tag (for example `v1.0.1`) triggers automated Linux builds and publishes a GitHub Release with attached artifacts. The release page notes are generated from every commit after `releaseNotes.fromHash` in `package.json`.
 
 ```bash
 git add .
