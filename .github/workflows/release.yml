@@ -25,7 +25,10 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --include=dev
+        env:
+          NODE_ENV: development
+          NPM_CONFIG_PRODUCTION: 'false'
 
       - name: Run validation checks
         run: npm run test:all
