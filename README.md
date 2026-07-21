@@ -32,8 +32,19 @@ npm run build:linux
 ```
 
 Build outputs are generated in `dist/`:
+
 - `.AppImage`
 - `.deb`
+
+## Build Flatpak package
+
+Flatpak builds require `flatpak` and `flatpak-builder`, plus the Freedesktop and Electron BaseApp runtimes from Flathub.
+
+```bash
+npm run build:flatpak
+```
+
+The release workflow installs those build dependencies in CI and attaches the generated `.flatpak` bundle to GitHub releases.
 
 ## GitHub Release Flow
 

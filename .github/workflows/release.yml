@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - "v*"
+      - 'v*'
 
 permissions:
   contents: write
@@ -27,8 +27,21 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Run validation checks
+        run: npm run test:all
+
+      - name: Install Flatpak build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y flatpak flatpak-builder
+          flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+          flatpak install --user -y flathub org.freedesktop.Platform//24.08 org.freedesktop.Sdk//24.08 org.electronjs.Electron2.BaseApp//24.08
+
       - name: Build Linux packages
         run: npm run build:linux
+
+      - name: Build Flatpak package
+        run: npm run build:flatpak
 
       - name: Generate release notes
         run: node scripts/generate-release-notes.js release-notes.md
@@ -40,3 +53,4 @@ jobs:
           files: |
             dist/*.AppImage
             dist/*.deb
+            dist/*.flatpak

@@ -1,6 +1,6 @@
 {
   "name": "chatgpt",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Linux-friendly Electron wrapper for ChatGPT",
   "homepage": "https://chatgpt.com",
   "main": "main.js",
@@ -11,22 +11,40 @@
   "license": "MIT",
   "private": true,
   "releaseNotes": {
-    "fromHash": "28cf9a9"
+    "fromHash": "74d7580"
   },
   "scripts": {
     "start": "electron .",
-    "dev": "electron .",
+    "dev": "electron . --dev",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run tests/unit",
+    "test:watch": "vitest",
+    "test:integration": "vitest run tests/integration",
+    "test:e2e": "playwright test",
+    "test:all": "npm run lint && npm run format:check && npm run test && npm run test:integration && npm run test:e2e",
+    "build": "electron-builder",
     "build:linux": "electron-builder --linux --publish never",
-    "release:linux": "npm run build:linux"
+    "build:flatpak": "electron-builder --linux flatpak --publish never",
+    "release:linux": "npm run build:linux && npm run build:flatpak",
+    "verify": "npm run test:all && npm run build:linux"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.61.1",
     "electron": "^37.2.0",
-    "electron-builder": "^26.0.12"
+    "electron-builder": "^26.0.12",
+    "eslint": "^10.7.0",
+    "globals": "^17.7.0",
+    "prettier": "^3.9.6",
+    "vitest": "^4.1.10"
   },
   "build": {
     "appId": "com.local.chatgpt",
     "productName": "ChatGPT",
-    "npmRebuild": false,
+    "npmRebuild": true,
+    "beforeBuild": "scripts/before-build.js",
     "files": [
       "main.js",
       "preload.js",
@@ -41,6 +59,24 @@
       "executableName": "chatgpt",
       "maintainer": "Stephan Coertzen <coertzen.jfs@gmail.com>",
       "category": "Utility"
+    },
+    "flatpak": {
+      "artifactName": "${productName}-${version}-${arch}.${ext}",
+      "runtime": "org.freedesktop.Platform",
+      "runtimeVersion": "24.08",
+      "sdk": "org.freedesktop.Sdk",
+      "base": "org.electronjs.Electron2.BaseApp",
+      "baseVersion": "24.08",
+      "useWaylandFlags": false,
+      "finishArgs": [
+        "--socket=x11",
+        "--socket=wayland",
+        "--share=ipc",
+        "--device=dri",
+        "--socket=pulseaudio",
+        "--share=network",
+        "--talk-name=org.freedesktop.Notifications"
+      ]
     }
   }
 }

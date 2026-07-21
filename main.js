@@ -3,7 +3,11 @@
  * Developer: Stephan Coertzen <coertzen.jfs@gmail.com>
  * License: MIT
  */
-const { app, BrowserWindow, shell } = require('electron');
+const path = require('path');
+const electron = require('electron');
+
+const { app, BrowserWindow, Menu, clipboard, ipcMain, shell } = electron;
+const CHATGPT_URL = 'https://chatgpt.com';
 
 const REFRESH_BUTTON_SCRIPT = `
 (() => {
@@ -16,7 +20,7 @@ const REFRESH_BUTTON_SCRIPT = `
   const host = document.createElement('div');
   host.id = hostId;
   host.style.position = 'fixed';
-  host.style.top = '12px';
+  host.style.top = '64px';
   host.style.right = '14px';
   host.style.zIndex = '2147483647';
 
@@ -86,24 +90,58 @@ function injectRefreshButton(win) {
   });
 }
 
-function createWindow() {
-  const win = new BrowserWindow({
+function createContextMenu(params, MenuImpl = Menu) {
+  const template = [];
+
+  if (params.isEditable) {
+    template.push(
+      { role: 'undo' },
+      { role: 'redo' },
+      { type: 'separator' },
+      { role: 'cut' },
+      { role: 'copy' },
+      { role: 'paste' },
+      { role: 'selectAll' }
+    );
+  } else if (params.selectionText) {
+    template.push({ role: 'copy' });
+  }
+
+  return template.length > 0 ? MenuImpl.buildFromTemplate(template) : null;
+}
+
+function getWindowOptions(baseDir = __dirname) {
+  return {
     width: 1280,
     height: 820,
     minWidth: 980,
     minHeight: 640,
     autoHideMenuBar: true,
     webPreferences: {
-      preload: require('path').join(__dirname, 'preload.js'),
+      preload: path.join(baseDir, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true
     }
-  });
+  };
+}
+
+function createWindow(dependencies = {}) {
+  const BrowserWindowImpl = dependencies.BrowserWindow || BrowserWindow;
+  const shellImpl = dependencies.shell || shell;
+  const win = new BrowserWindowImpl(getWindowOptions(dependencies.baseDir));
 
   win.webContents.setWindowOpenHandler(({ url }) => {
-    shell.openExternal(url);
+    shellImpl.openExternal(url);
     return { action: 'deny' };
+  });
+
+  win.webContents.on('context-menu', (_event, params) => {
+    const menu = createContextMenu(params);
+
+    if (menu) {
+      menu.popup({ window: win });
+    }
   });
 
   win.webContents.on('before-input-event', (event, input) => {
@@ -117,21 +155,72 @@ function createWindow() {
     injectRefreshButton(win);
   });
 
-  win.loadURL('https://chatgpt.com');
+  win.loadURL(CHATGPT_URL);
+  return win;
 }
 
-app.whenReady().then(() => {
-  createWindow();
+function registerPrimarySelectionPasteHandler(dependencies = {}) {
+  const ipcMainImpl = dependencies.ipcMain || ipcMain;
+  const clipboardImpl = dependencies.clipboard || clipboard;
+  const platform = dependencies.platform || process.platform;
 
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
+  ipcMainImpl.handle(
+    'chatgpt-desktop:paste-primary-selection',
+    async (event) => {
+      if (platform !== 'linux') {
+        return false;
+      }
+
+      const text = clipboardImpl.readText('selection');
+
+      if (!text) {
+        return false;
+      }
+
+      try {
+        await event.sender.insertText(text);
+        return true;
+      } catch {
+        return false;
+      }
+    }
+  );
+}
+
+function startApp(dependencies = {}) {
+  const appImpl = dependencies.app || app;
+  const BrowserWindowImpl = dependencies.BrowserWindow || BrowserWindow;
+
+  registerPrimarySelectionPasteHandler(dependencies);
+
+  appImpl.whenReady().then(() => {
+    createWindow(dependencies);
+
+    appImpl.on('activate', () => {
+      if (BrowserWindowImpl.getAllWindows().length === 0) {
+        createWindow(dependencies);
+      }
+    });
+  });
+
+  appImpl.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') {
+      appImpl.quit();
     }
   });
-});
+}
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
-});
+if (require.main === module) {
+  startApp();
+}
+
+module.exports = {
+  CHATGPT_URL,
+  REFRESH_BUTTON_SCRIPT,
+  createContextMenu,
+  createWindow,
+  getWindowOptions,
+  injectRefreshButton,
+  registerPrimarySelectionPasteHandler,
+  startApp
+};

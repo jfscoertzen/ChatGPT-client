@@ -21,21 +21,13 @@ function git(args) {
 
 git(['cat-file', '-e', `${fromHash}^{commit}`]);
 
-const tagName = process.env.GITHUB_REF_NAME || git(['describe', '--tags', '--always']);
+const tagName =
+  process.env.GITHUB_REF_NAME || git(['describe', '--tags', '--always']);
 const targetHash = process.env.GITHUB_SHA || git(['rev-parse', 'HEAD']);
 const compareRange = `${fromHash}..${targetHash}`;
-const commits = git([
-  'log',
-  '--pretty=format:%h%x09%s%x09%an',
-  compareRange
-]);
+const commits = git(['log', '--pretty=format:%h%x09%s%x09%an', compareRange]);
 
-const lines = [
-  `# ${tagName}`,
-  '',
-  `Changes since \`${fromHash}\`:`,
-  ''
-];
+const lines = [`# ${tagName}`, '', `Changes since \`${fromHash}\`:`, ''];
 
 if (commits) {
   for (const commit of commits.split('\n')) {
