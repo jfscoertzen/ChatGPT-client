@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ChatGPT Offline</title>
+    <link rel="stylesheet" href="./offline.css" />
+  </head>
+  <body>
+    <main>
+      <section>
+        <p class="eyebrow">Connection problem</p>
+        <h1>ChatGPT could not be reached.</h1>
+        <p id="message">
+          Check your internet connection, proxy, VPN, or DNS settings.
+        </p>
+
+        <dl>
+          <div>
+            <dt>URL</dt>
+            <dd id="target-url"></dd>
+          </div>
+          <div>
+            <dt>Status</dt>
+            <dd id="retry-status"></dd>
+          </div>
+        </dl>
+
+        <details>
+          <summary>Technical details</summary>
+          <pre id="technical-details"></pre>
+        </details>
+
+        <footer>
+          <button id="retry-button" type="button">Retry</button>
+          <button id="browser-button" type="button">Open in Browser</button>
+        </footer>
+      </section>
+    </main>
+
+    <script src="./offline.js"></script>
+  </body>
+</html>

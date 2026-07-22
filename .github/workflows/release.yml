@@ -35,15 +35,34 @@ jobs:
       - name: Install Flatpak build tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y flatpak flatpak-builder
+          sudo apt-get install -y flatpak flatpak-builder rpm
           flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
           flatpak install --user -y flathub org.freedesktop.Platform//24.08 org.freedesktop.Sdk//24.08 org.electronjs.Electron2.BaseApp//24.08
 
-      - name: Build Linux packages
-        run: npm run build:linux
+      - name: Build Linux x64 packages
+        run: npm run build:linux:x64
+
+      - name: Build Linux ARM64 packages
+        run: npm run build:linux:arm64
+
+      - name: Build Linux x64 RPM package
+        run: npm run build:rpm:x64
+
+      - name: Build Linux ARM64 RPM package
+        run: npm run build:rpm:arm64
 
       - name: Build Flatpak package
         run: npm run build:flatpak
+
+      - name: Generate artifact checksums
+        run: npm run checksums
+
+      - name: Validate release artifacts
+        run: |
+          test -n "$(find dist -maxdepth 1 -type f \( -name '*.AppImage' -o -name '*.deb' -o -name '*.rpm' -o -name '*.flatpak' \) -print -quit)"
+          test -n "$(find dist -maxdepth 1 -type f -name '*.sha256' -print -quit)"
+          cd dist
+          sha256sum --check *.sha256
 
       - name: Generate release notes
         run: node scripts/generate-release-notes.js release-notes.md
@@ -55,4 +74,6 @@ jobs:
           files: |
             dist/*.AppImage
             dist/*.deb
+            dist/*.rpm
             dist/*.flatpak
+            dist/*.sha256

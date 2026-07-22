@@ -2,7 +2,10 @@ const path = require('path');
 const {
   CHATGPT_URL,
   createContextMenu,
+  createSettingsWindow,
   createWindow,
+  getSettingsWindowOptions,
+  getProfilePartition,
   getWindowOptions,
   registerPrimarySelectionPasteHandler
 } = require('../../main');
@@ -16,14 +19,16 @@ describe('main process baseline behavior', () => {
     expect(options.height).toBe(820);
     expect(options.minWidth).toBeGreaterThanOrEqual(900);
     expect(options.minHeight).toBeGreaterThanOrEqual(600);
+    expect(options.autoHideMenuBar).toBe(false);
     expect(options.webPreferences).toMatchObject({
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true
     });
     expect(options.webPreferences.preload).toBe(
-      path.join('/app', 'preload.js')
+      path.join('/app', 'src', 'preload', 'chatgpt.js')
     );
+    expect(options.webPreferences.partition).toBe('persist:chatgpt-default');
   });
 
   test('loads the official ChatGPT URL by default', () => {
@@ -39,6 +44,107 @@ describe('main process baseline behavior', () => {
     expect(win.loadedUrl).toBe(CHATGPT_URL);
   });
 
+  test('loads the configured validated ChatGPT URL', () => {
+    const FakeBrowserWindow = createFakeBrowserWindowClass();
+    const settingsManager = {
+      get: vi.fn(() => ({
+        chatgptUrl: 'https://chat.openai.com/',
+        zoomFactor: 1.2
+      }))
+    };
+
+    const win = createWindow({
+      BrowserWindow: FakeBrowserWindow,
+      shell: { openExternal: vi.fn() },
+      settingsManager,
+      baseDir: '/app'
+    });
+
+    expect(win.loadedUrl).toBe('https://chat.openai.com/');
+    expect(win.webContents.setZoomFactor).toHaveBeenCalledWith(1.2);
+  });
+
+  test('uses an isolated persistent session partition for the configured profile', () => {
+    const FakeBrowserWindow = createFakeBrowserWindowClass();
+    const settingsManager = {
+      get: vi.fn(() => ({
+        chatgptUrl: 'https://chatgpt.com',
+        profile: 'work',
+        zoomFactor: 1
+      }))
+    };
+
+    const win = createWindow({
+      BrowserWindow: FakeBrowserWindow,
+      shell: { openExternal: vi.fn() },
+      settingsManager,
+      baseDir: '/app'
+    });
+
+    expect(getProfilePartition('work')).toBe('persist:chatgpt-work');
+    expect(win.options.webPreferences.partition).toBe('persist:chatgpt-work');
+  });
+
+  test('restores persisted window state when creating the main window', () => {
+    const FakeBrowserWindow = createFakeBrowserWindowClass();
+    const windowStateManager = {
+      load: vi.fn(() => ({
+        width: 1100,
+        height: 720,
+        x: 30,
+        y: 40,
+        isMaximized: true,
+        isFullScreen: true,
+        zoomFactor: 1.35
+      })),
+      scheduleSaveFromWindow: vi.fn()
+    };
+
+    const win = createWindow({
+      BrowserWindow: FakeBrowserWindow,
+      shell: { openExternal: vi.fn() },
+      windowStateManager,
+      baseDir: '/app'
+    });
+
+    expect(win.options).toMatchObject({
+      width: 1100,
+      height: 720,
+      x: 30,
+      y: 40
+    });
+    expect(win.maximized).toBe(true);
+    expect(win.fullScreen).toBe(true);
+    expect(win.webContents.setZoomFactor).toHaveBeenCalledWith(1.35);
+    expect(win.handlers.has('resize')).toBe(true);
+    expect(win.handlers.has('close')).toBe(true);
+  });
+
+  test('uses a secure local settings window', () => {
+    const options = getSettingsWindowOptions('/app');
+
+    expect(options.webPreferences).toMatchObject({
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true
+    });
+    expect(options.webPreferences.preload).toBe(
+      path.join('/app', 'src', 'preload', 'settings.js')
+    );
+  });
+
+  test('loads settings UI from trusted local application files', () => {
+    const FakeBrowserWindow = createFakeBrowserWindowClass();
+    const win = createSettingsWindow({
+      BrowserWindow: FakeBrowserWindow,
+      baseDir: '/app'
+    });
+
+    expect(win.loadedFile).toBe(
+      path.join('/app', 'src', 'renderer', 'settings.html')
+    );
+  });
+
   test('opens new windows externally and denies in-app popups', () => {
     const FakeBrowserWindow = createFakeBrowserWindowClass();
     const shell = { openExternal: vi.fn() };
@@ -48,8 +154,48 @@ describe('main process baseline behavior', () => {
       url: 'https://example.com'
     });
 
-    expect(shell.openExternal).toHaveBeenCalledWith('https://example.com');
+    expect(shell.openExternal).toHaveBeenCalledWith('https://example.com/');
     expect(result).toEqual({ action: 'deny' });
+  });
+
+  test('registers explicit permission handlers on the main session', () => {
+    const FakeBrowserWindow = createFakeBrowserWindowClass();
+    const win = createWindow({
+      BrowserWindow: FakeBrowserWindow,
+      shell: { openExternal: vi.fn() }
+    });
+
+    expect(
+      win.webContents.session.setPermissionRequestHandler
+    ).toHaveBeenCalledWith(expect.any(Function));
+    expect(
+      win.webContents.session.setPermissionCheckHandler
+    ).toHaveBeenCalledWith(expect.any(Function));
+  });
+
+  test('registers download handling on the main session', () => {
+    const FakeBrowserWindow = createFakeBrowserWindowClass();
+    const win = createWindow({
+      BrowserWindow: FakeBrowserWindow,
+      shell: { openExternal: vi.fn() }
+    });
+
+    expect(win.webContents.session.on).toHaveBeenCalledWith(
+      'will-download',
+      expect.any(Function)
+    );
+  });
+
+  test('registers health monitoring on the main window', () => {
+    const FakeBrowserWindow = createFakeBrowserWindowClass();
+    const win = createWindow({
+      BrowserWindow: FakeBrowserWindow,
+      shell: { openExternal: vi.fn() }
+    });
+
+    expect(win.webContents.handlers.has('render-process-gone')).toBe(true);
+    expect(win.handlers.has('unresponsive')).toBe(true);
+    expect(win.handlers.has('responsive')).toBe(true);
   });
 
   test('handles F5 by preventing default and reloading', () => {
@@ -80,6 +226,17 @@ describe('main process baseline behavior', () => {
 
     expect(event.preventDefault).not.toHaveBeenCalled();
     expect(win.webContents.reload).not.toHaveBeenCalled();
+  });
+
+  test('does not inject a permanent refresh button into the ChatGPT page', () => {
+    const FakeBrowserWindow = createFakeBrowserWindowClass();
+    const win = createWindow({
+      BrowserWindow: FakeBrowserWindow,
+      shell: { openExternal: vi.fn() }
+    });
+
+    expect(win.webContents.handlers.has('dom-ready')).toBe(false);
+    expect(win.webContents.executeJavaScript).not.toHaveBeenCalled();
   });
 
   test('builds an editable context menu with paste support', () => {

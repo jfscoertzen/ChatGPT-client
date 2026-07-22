@@ -1,0 +1,125 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #111318;
+  color: #f3f4f6;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+}
+
+main {
+  width: min(100%, 560px);
+  margin: 0 auto;
+  padding: 28px;
+}
+
+h1 {
+  margin: 0 0 24px;
+  font-size: 24px;
+  font-weight: 650;
+}
+
+h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 650;
+}
+
+form {
+  display: grid;
+  gap: 16px;
+}
+
+label {
+  display: grid;
+  gap: 8px;
+  color: #d1d5db;
+  font-size: 14px;
+}
+
+input {
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid #343844;
+  border-radius: 6px;
+  background: #1b1f29;
+  color: #f9fafb;
+  padding: 8px 10px;
+  font: inherit;
+}
+
+input:focus {
+  border-color: #10a37f;
+  outline: 2px solid rgb(16 163 127 / 30%);
+  outline-offset: 1px;
+}
+
+.checkbox {
+  grid-template-columns: 18px 1fr;
+  align-items: center;
+}
+
+.checkbox input {
+  width: 18px;
+  min-height: 18px;
+}
+
+#status {
+  min-height: 20px;
+  margin: 0;
+  color: #9ca3af;
+  font-size: 13px;
+}
+
+.privacy-actions {
+  display: grid;
+  gap: 10px;
+  border-top: 1px solid #242936;
+  padding-top: 16px;
+}
+
+.button-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 8px;
+}
+
+button {
+  min-height: 36px;
+  border: 1px solid #343844;
+  border-radius: 6px;
+  background: #242936;
+  color: #f9fafb;
+  padding: 0 14px;
+  font: inherit;
+}
+
+button[type='submit'] {
+  border-color: #10a37f;
+  background: #10a37f;
+  color: #06110e;
+}
+
+@media (width <= 520px) {
+  .button-grid,
+  footer {
+    grid-template-columns: 1fr;
+    flex-direction: column;
+  }
+}

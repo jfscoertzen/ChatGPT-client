@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ChatGPT Settings</title>
+    <link rel="stylesheet" href="./settings.css" />
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>Settings</h1>
+      </header>
+
+      <form id="settings-form">
+        <label>
+          ChatGPT URL
+          <input id="chatgpt-url" name="chatgptUrl" type="url" required />
+        </label>
+
+        <label>
+          Global shortcut
+          <input id="global-shortcut" name="globalShortcut" type="text" />
+        </label>
+
+        <label>
+          Profile
+          <input id="profile" name="profile" type="text" list="profiles" />
+          <datalist id="profiles">
+            <option value="default"></option>
+            <option value="personal"></option>
+            <option value="work"></option>
+          </datalist>
+        </label>
+
+        <label>
+          Zoom factor
+          <input
+            id="zoom-factor"
+            name="zoomFactor"
+            type="number"
+            min="0.5"
+            max="3"
+            step="0.05"
+          />
+        </label>
+
+        <label class="checkbox">
+          <input id="close-to-tray" name="closeToTray" type="checkbox" />
+          Close to tray
+        </label>
+
+        <label class="checkbox">
+          <input id="start-minimized" name="startMinimized" type="checkbox" />
+          Start minimized
+        </label>
+
+        <label class="checkbox">
+          <input id="launch-at-login" name="launchAtLogin" type="checkbox" />
+          Launch at login
+        </label>
+
+        <label class="checkbox">
+          <input
+            id="enable-notifications"
+            name="enableNotifications"
+            type="checkbox"
+          />
+          Enable notifications
+        </label>
+
+        <p id="status" role="status"></p>
+
+        <section class="privacy-actions" aria-labelledby="privacy-heading">
+          <h2 id="privacy-heading">Privacy</h2>
+          <div class="button-grid">
+            <button type="button" id="clear-cache-button">Clear Cache</button>
+            <button type="button" id="clear-cookies-button">
+              Clear Cookies
+            </button>
+            <button type="button" id="clear-storage-button">
+              Clear Storage Data
+            </button>
+            <button type="button" id="sign-out-button">
+              Sign Out and Clear Session
+            </button>
+          </div>
+        </section>
+
+        <footer>
+          <button type="button" id="clear-permissions-button">
+            Clear Permissions
+          </button>
+          <button type="button" id="reset-button">Reset</button>
+          <button type="submit">Save</button>
+        </footer>
+      </form>
+    </main>
+
+    <script src="./confirm-action.js"></script>
+    <script src="./settings.js"></script>
+  </body>
+</html>
